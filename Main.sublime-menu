@@ -1,0 +1,29 @@
+[
+	{
+		"caption": "Preferences",
+		"mnemonic": "n",
+		"id": "preferences",
+		"children": [
+			{
+                "caption": "Package Settings",
+                "mnemonic": "P",
+                "id": "package-settings",
+                "children": [
+                	{
+                		"caption": "NpmRunner",
+                		"children": [
+                			{
+                				"caption": "Settings",
+                				"command": "edit_settings",
+                				"args": {
+                					"base_file": "${packages}/NpmRunner/NpmRunner.sublime-settings",
+                					"default": "[\n\t$0\n]\n"
+                				}
+                			}
+                		]
+                	}
+                ]
+			}
+		]
+	}
+]

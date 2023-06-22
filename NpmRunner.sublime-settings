@@ -1,0 +1,5 @@
+{
+	// Whether to show NPM script outputs as a separate tab rather than in a panel.
+	// Only applicable if Terminus is installed.
+	"show_output_in_tab": false
+}

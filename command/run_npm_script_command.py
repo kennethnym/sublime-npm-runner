@@ -7,10 +7,12 @@ import threading
 import json
 from concurrent.futures.thread import ThreadPoolExecutor
 
+from ..internal.settings import DEFAULT_SHOW_OUTPUT_IN_TAB, SETTINGS_SHOW_OUTPUT_IN_TAB
 from ..internal.terminus_integration import can_use_terminus, run_with_terminus
 from ..internal.special_files import (
     GITIGNORE,
     NPM_LOCK_FILE,
+    PLUGIN_SETTINGS_FILE,
     PNPM_LOCK_FILE,
     YARN_LOCK_FILE,
 )
@@ -39,6 +41,8 @@ class RunNpmScriptCommand(sublime_plugin.WindowCommand):
         # Maps absolute paths of package.json files to the package manager that should be used for it.
         self.__package_manager = {}
 
+        self.__plugin_settings = sublime.load_settings(PLUGIN_SETTINGS_FILE)
+
         threading.Thread(
             target=self.__index_folders, args=(window.folders(),), daemon=True
         ).start()
@@ -57,9 +61,13 @@ class RunNpmScriptCommand(sublime_plugin.WindowCommand):
         return NpmScriptInputHandler(all_scripts)
 
     def run(self, npm_script):
-        package_json_path, script_name = npm_script
         threading.Thread(
-            target=self.__run_script, args=(package_json_path, script_name)
+            target=self.__run_script,
+            args=(
+                npm_script["package_json_path"],
+                npm_script["package_name"],
+                npm_script["script_name"],
+            ),
         ).start()
 
     def reload(self):
@@ -170,7 +178,7 @@ class RunNpmScriptCommand(sublime_plugin.WindowCommand):
 
         return ""
 
-    def __run_script(self, package_json_path, script_name):
+    def __run_script(self, package_json_path, package_name, script_name):
         package_manager = self.__package_manager[package_json_path]
         if not package_manager:
             sublime.error_message("No package manager found.")
@@ -185,7 +193,12 @@ class RunNpmScriptCommand(sublime_plugin.WindowCommand):
                 cmd=[package_manager_path, "run", script_name],
                 cwd=os.path.dirname(package_json_path),
                 window=self.window,
-                use_panel=True,
+                use_tab=self.__plugin_settings.get(
+                    SETTINGS_SHOW_OUTPUT_IN_TAB, DEFAULT_SHOW_OUTPUT_IN_TAB
+                ),
+                tab_title="{}: {}".format(package_name, script_name)
+                if package_name
+                else script_name,
             )
         else:
             p = subprocess.Popen(
@@ -220,7 +233,11 @@ class NpmScriptInputHandler(sublime_plugin.ListInputHandler):
                 if script.package_name
                 else script.script_name,
                 details=os.path.relpath(script.package_json_path, script.project_path),
-                value=[script.package_json_path, script.script_name],
+                value={
+                    "package_json_path": script.package_json_path,
+                    "script_name": script.script_name,
+                    "package_name": script.package_name,
+                },
                 kind=sublime.KIND_AMBIGUOUS,
             )
             for script in self.__scripts

@@ -10,13 +10,15 @@ def can_use_terminus():
     return False
 
 
-def run_with_terminus(cmd, cwd, window, use_panel):
+def run_with_terminus(cmd, cwd, window, use_tab, tab_title):
     args = {
         "cmd": cmd,
         "cwd": cwd,
     }
 
-    if use_panel:
+    if not use_tab:
         args["panel_name"] = "npmrunner.output"
+    else:
+        args["title"] = tab_title
 
     window.run_command("terminus_open", args)
