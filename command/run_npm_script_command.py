@@ -7,9 +7,14 @@ import threading
 import json
 from concurrent.futures.thread import ThreadPoolExecutor
 
-from .terminus_integration import can_use_terminus, run_with_terminus
-from .special_files import GITIGNORE, NPM_LOCK_FILE, PNPM_LOCK_FILE, YARN_LOCK_FILE
-from .npm_script import NpmScript
+from ..internal.terminus_integration import can_use_terminus, run_with_terminus
+from ..internal.special_files import (
+    GITIGNORE,
+    NPM_LOCK_FILE,
+    PNPM_LOCK_FILE,
+    YARN_LOCK_FILE,
+)
+from ..internal.npm_script import NpmScript
 
 import sublime
 import sublime_plugin
@@ -34,8 +39,11 @@ class RunNpmScriptCommand(sublime_plugin.WindowCommand):
         # Maps absolute paths of package.json files to the package manager that should be used for it.
         self.__package_manager = {}
 
-        threading.Thread(target=self.__index_folders, args=(window.folders(),)).start()
-        threading.Thread(target=self.__poll_for_folder_changes).start()
+        threading.Thread(
+            target=self.__index_folders, args=(window.folders(),), daemon=True
+        ).start()
+
+        threading.Thread(target=self.__poll_for_folder_changes, daemon=True).start()
 
     def is_visible(self) -> bool:
         return not self.__is_indexing and len(self.__all_npm_scripts) > 0
@@ -52,6 +60,14 @@ class RunNpmScriptCommand(sublime_plugin.WindowCommand):
         package_json_path, script_name = npm_script
         threading.Thread(
             target=self.__run_script, args=(package_json_path, script_name)
+        ).start()
+
+    def reload(self):
+        self.__all_npm_scripts.clear()
+        self.__package_manager.clear()
+
+        threading.Thread(
+            target=self.__index_folders, args=(self.window.folders(),), daemon=True
         ).start()
 
     def __poll_for_folder_changes(self):

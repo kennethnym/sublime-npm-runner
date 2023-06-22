@@ -2,5 +2,9 @@
 	{
 		"caption": "NpmRunner: Run NPM script...",
 		"command": "run_npm_script"
+	},
+	{
+		"caption": "NpmRunner: Reload",
+		"command": "reload_npm_scripts"
 	}
 ]
