@@ -1,0 +1,6 @@
+[
+	{
+		"caption": "NpmRunner: Run NPM script...",
+		"command": "run_npm_script"
+	}
+]
